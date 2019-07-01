@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>My Todo Application</title>
+  </head>
+  <body>
+
+	<!-- As a heading -->
+	<nav class="navbar navbar-light bg-light">
+	  <span class="navbar-brand mb-0 h1">My Simple Todo App</span>
+	</nav>
+	<br />
+  	<div class="container">
+  		<div class="row">
+  			<div class="col-md-2"></div>
+		    <div class="col-md-8">
+		    	<form id="form">
+					<div class="form-row">
+						<div class="col-sm-12">
+							<label for="todoUserInput">Todo Input</label>
+						</div>
+						<div class="col-sm-9">
+							<input type="text" class="form-control" placeholder="Write Todo" id="todoUserInput" value="">
+						</div>
+						<div class="col-sm-3">
+							<button type="submit" class="btn btn-primary btn-block">Add Todo Item</button>
+						</div>
+					</div>
+				</form>
+		    </div>
+		    <div class="col-md-2"></div>
+  		</div>
+  		<br />
+  		<div class="row">
+  			<div class="col-md-2"></div>
+		    <div class="col-md-8">
+		    	<ul class="list-group" id="display"></ul>
+		    </div>
+		    <div class="col-md-2"></div>
+  		</div>
+  		<br />
+  		<div class="row">
+  			<div class="col-md-2"></div>
+		    <div class="col-md-8">
+				<div class="alert alert-dismissible fade show" role="alert" id="alert">
+					<div id="message"></div>
+					<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+		    	</div>
+		    </div>
+		    <div class="col-md-2"></div>
+  		</div>
+  		
+  	</div>
+    
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+    	$(document).ready(() => {
+    		const display = $("#display");
+    		const form = $("#form");
+    		const userInput = $("#todoUserInput");
+    		const alert = $("#alert");
+    		const message = $("#message");
+
+    		//get all the list of todos
+    		const getTodos = () => {
+    			fetch('/get-todos')
+    			.then((response) => {
+    				return response.json();
+    			})
+    			.then((myTodos) => {
+    				displayListItems(myTodos);
+    			})
+    		}
+
+    		getTodos();
+    		alert.hide();
+
+    		const displayMessage = (flag, msg) => {
+    			if (flag) {
+    				alert.removeClass('alert-danger');
+    				alert.addClass('alert-success');
+    			} else {
+    				alert.removeClass('alert-success');
+    				alert.addClass('alert-danger');
+    				
+    			}
+    			message.html(msg);
+    			alert.show();
+    		}
+
+    		form.on('submit', (e) => {
+    			e.preventDefault();
+    			const newTodo = userInput.val();
+    			//console.log(newTodo);
+				const data = { todo: newTodo };
+				fetch('/', {
+				  method: 'POST', // or 'PUT'
+				  body: JSON.stringify(data), // data can be `string` or {object}!
+				  headers:{
+				    'Content-Type': 'application/json'
+				  }
+				}).then(res => res.json())
+				.then(response => {
+					if (!response.error) {
+						if (response.result.ok == 1 && response.result.n == 1) {
+							const ids = IDs(response.document);
+							display.append(buildList(response.document, ids));
+							editTodo(ids.todoID, ids.editID, response.document);
+							deleteTodo(ids.deleteID, response.document, ids.listItemId);
+							displayMessage(true, response.msg);
+						} else {
+							displayMessage(false, "An Internal Sever Error Occured");
+						}
+					} else {
+						displayMessage(false, response.error.message);
+					}
+					resetInputField();
+				})
+				.catch(error => {
+					displayMessage(false, "An Internal Sever Error Occured");
+					resetInputField();
+				});
+    		})
+
+    		const deleteTodo = (deleteID, todo, listItemId) => {
+    			$("#" + deleteID ).on('click', () => {
+    				fetch('/'+todo._id, {
+    					method: 'DELETE'
+    				})
+    				.then(res => res.json())
+    				.then(response => {
+    					if (response.ok) {
+    						$("#"+listItemId).remove();
+    					}
+    				});
+    			})
+    		}
+
+    		const resetInputField = () => {
+    			userInput.val('');
+    		}
+
+    		const IDs = (todo) => {
+    			return {
+    				editID: 'edit_' + todo._id,
+    				deleteID: 'delete_' + todo._id,
+    				todoID: 'todo_' + todo._id,
+    				listItemId: 'listItem_' + todo._id
+    			}
+    		}
+
+    		const buildList = (todo, ids) => {
+    			return `
+    				<li class="list-group-item" id="${ids.listItemId}">
+    					<div class="row">
+    						<div class="col-sm-4" id="${ids.todoID}">${todo.todo}</div>
+    						<div class="col-sm-4"></div>
+    						<div class="col-sm-4 text-right">
+    							<button type="button" class="btn btn-warning" id="${ids.editID}">Edit</button>
+    							<button type="button" class="btn btn-danger" id="${ids.deleteID}">Delete</button>
+    						</div>
+    					</div>
+    				</li>
+    			`;
+    		}
+
+    		const displayListItems = (todos) => {
+    			todos.forEach((todo) => {
+    				let ids = IDs(todo);
+    				display.append(buildList(todo, ids));
+    				editTodo(ids.todoID, ids.editID, todo);
+    				deleteTodo(ids.deleteID, todo, ids.listItemId);
+    			});
+    		}
+
+    		const editTodo = (todoID, editIDBtn, todoObj) => {
+    			$("#"+editIDBtn).on('click', () => {
+    				const todoString = userInput.val();
+    				console.log(todoString);
+    				if (todoString !== '') {
+    					const data = {todo: todoString};
+    					fetch('/' + todoObj._id, {
+    						method: 'PUT',
+    						headers: {
+    							'Content-Type': 'application/json'
+    						},
+    						body: JSON.stringify(data)
+    					})
+    					.then(response => response.json())
+    					.then(myRes => {
+    						console.log(myRes);
+    						$("#"+todoID).html(todoString);
+    						resetInputField();
+    					})
+    				}
+    			})
+    		}
+    	})
+    </script>
+  </body>
+</html>

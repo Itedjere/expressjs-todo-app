@@ -1,0 +1,33 @@
+{
+  "name": "simpleblog",
+  "version": "1.0.0",
+  "description": "Creating a simple todo in expressjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itedjere/expressjssimpleblog.git"
+  },
+  "keywords": [
+    "ExpressJs",
+    "Simple",
+    "Todo"
+  ],
+  "author": "Godspower Itedjere",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/itedjere/expressjssimpleblog/issues"
+  },
+  "homepage": "https://github.com/itedjere/expressjssimpleblog#readme",
+  "dependencies": {
+    "@hapi/joi": "^15.1.0",
+    "express": "^4.17.1",
+    "express-edge": "^1.0.0",
+    "mongodb": "^3.2.7"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.1"
+  }
+}
