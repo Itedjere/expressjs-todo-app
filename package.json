@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/itedjere/expressjssimpleblog#readme",
   "dependencies": {
-    "@hapi/joi": "^15.1.0",
+    "@hapi/joi": "^15.1.1",
     "express": "^4.17.1",
     "express-edge": "^1.0.0",
     "mongodb": "^3.2.7"
